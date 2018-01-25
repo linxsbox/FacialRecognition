@@ -1,11 +1,15 @@
 # Facial Recognition Log
-Facial Recognition 记录开发的日志
+Facial Recognition 记录开发中遇到的问题的日志
     
 ## 遇到的问题
 
-### 【Dlib】
+    遇到问题 -> 记录 -> 寻找解决方案 -> 记录解决过程
 
-**1. UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd5**
+## 【Dlib】
+
+### **1. UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd5**
+
+    pip install dlib
 
 使用 **pip install dlib** 后出现错误
 
@@ -18,7 +22,7 @@ Facial Recognition 记录开发的日志
  1. 切换 python 版本：没有效果问题依旧
  2. 安装 CMake 后执行：新错误
 
-**2. Running setup.py install for dlib ... error**
+### **2. Running setup.py install for dlib ... error**
 
 ![CMake](./screenshots/[Error]Dlib-CMake.png)
 
@@ -28,9 +32,21 @@ Facial Recognition 记录开发的日志
 
 所以我放弃！！！然后开始尝试 **\*.whl** 模式安装。
 
-### 【Boots】
+> *注：后来再去看 **dlib source** 的时候才发现，这东西要想在 **indows** 下编译安装  是完全依赖于 **MSVC** 的。  
+如果你已经装了 **Visual Studio** 又想折腾一下的话……  
+**Hey man, Good Luck for you!**
 
-**1. bootstrap.bat 缺少CL**
+### **3. whl 方式**
+
+    pip install dlib-19.8.1-cp36-cp36m-win_amd64.whl
+
+![whl](./screenshots/[Success]Install-whl.png)
+
+Done!!!
+
+## 【Boots】
+
+### **1. bootstrap.bat 缺少CL**
 
 运行 **bootstrap.bat** 后报错
 
@@ -54,12 +70,12 @@ Facial Recognition 记录开发的日志
 
 安装完成后，使用命令: `$ bootstrap.bat gcc`  
 嗯~大约等了1分钟左右  
-Done！
+Done!
 
 ![GCC](./screenshots/[Success]Boots-GCC.png)
 
 
-**2. boots to python: Did not find command for MSVC toolset**
+### **2. boots to python: Did not find command for MSVC toolset**
 
 编译完成 **boots** 后会生成文件
 
@@ -94,4 +110,43 @@ Done！
 ![Bjam](./screenshots/[Success]Bjam-GCC.png)
 
 编译时长与机器性能相关  
+Done!
+
+## 【scikit-image】
+
+面部识别部分依赖 **scikit-image**
+
+    pip install scikit-image
+
+
+error: Microsoft Visual C++ 14.0 is required. Get it with "Microsoft Visual C++ Build Tools": http://landinghub.visualstudio.com/visual-cpp-build-tools
+
+严重依赖 **MSVC**
+
+## 【Code 部分】
+
+### **1. Usage: FacialRecognition.py \<image file\>**
+
+    python FacialRecognition.py
+
+略……提示已经很明显了！
+
+### **2. AttributeError: 'NoneType' object has no attribute 'shape'**
+
+    python FacialRecognition.py url
+
+![NoneType](./screenshots/[Error]python-NoneType.png)
+
+我以为是使用了 **url** 的问题，然后换成了 **filepath** ，结果依旧……
+
+然后在错误的行打印了获取的对象，running…… return None.
+
+后来去查询了资料：
+
+    调用opencv，就算图像的路径是错的，OpenCV 也不会提醒你的，但是当你使用命令print img 时得到的结果是 None。
+
+OK，原来是这样，然后 改成了 **dir** 的方式。
+
+    python FacialRecognition.py ./Imgs/face.jpg
+
 Done!
