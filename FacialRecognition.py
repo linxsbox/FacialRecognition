@@ -1,19 +1,21 @@
 # -*- coding: UTF-8 -*-
 import sys, os, dlib, cv2, glob
 import numpy as np
-from skimage import io
 
 shape_predictor_68_face_landmarks = "./DataModel/shape_predictor_68_face_landmarks.dat"
 face_recognition_resnet_model = "./DataModel/dlib_face_recognition_resnet_model_v1.dat"
 face_folder_path = "./faces"
 face_model_list = []
 
+detector = None
+predictor = None
+descriptor = None
 
 def init_facial_model():
+    global detector, predictor, descriptor
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(shape_predictor_68_face_landmarks)
-    recognitor = dlib.face_recognition_model_v1(face_recognition_resnet_model)
-    return (detector, predictor ,recognitor)
+    descriptor = dlib.face_recognition_model_v1(face_recognition_resnet_model)
 
 # Facial regional marker to Rect boundary information
 def facialRM_to_rect(rect):
@@ -40,18 +42,17 @@ def resize(image, width = 1080):
         dim = (width, int(image.shape[0] * r))
     else:
         dim = (image.shape[1], image.shape[0])
-
+    
     resized = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)    
     return resized
 
 # Facial regional marker to image file
 def facial_regional_marker(imagePath):
-    detector, predictor ,recognitor = init_facial_model()
 
     image = cv2.imread(imagePath)
     image = resize(image, width = 1080)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    rects = detector(gray, 1)
+    rects = detector(gray)
 
     for (i, rect) in enumerate(rects):
         shape_predictor = predictor(gray, rect)
@@ -74,30 +75,29 @@ def facial_regional_marker(imagePath):
 
 # Facial_model_acquisition
 def facial_model_acquisition():
-    detector, predictor ,recognitor = init_facial_model()
 
-    for face in glob.glob(os.path.join(face_folder_path, "*.jpg")):
-        # print("Processing file: {}".format(face))
-        image = io.imread(face)
+    for file in os.listdir(face_folder_path):
+        image = cv2.imread(os.path.join(face_folder_path, file))
 
-        rects = detector(image, 1)
+        # 单张耗时 150~450ms，未尝试过大体积文件 size > 1024kb
+        # rects = detector(image, 1)
+        rects = detector(image)
 
-        for (i, rect) in enumerate(rects):
+        for i, rect in enumerate(rects):
             shape = predictor(image, rect)
 
-            face_descriptor = recognitor.compute_face_descriptor(image, shape)
+            # 计算人脸特征描述部分，单张耗时 > 500ms，未尝试过大体积文件 size > 1024kb
+            face_descriptor = descriptor.compute_face_descriptor(image, shape)
 
             features_coordinate = np.array(face_descriptor)
             face_model_list.append(features_coordinate)
 
-
 def facial_feature(imagePath):
-    detector, predictor ,recognitor = init_facial_model()
 
     image = cv2.imread(imagePath)
     image = resize(image, width = 1080)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    rects = detector(image, 1)
+    rects = detector(image)
 
     x = 0
     y = 0
@@ -108,7 +108,18 @@ def facial_feature(imagePath):
         x = rect.left()
         y = rect.top()
 
-        face_descriptor = recognitor.compute_face_descriptor(image, shape)
+        face_descriptor = descriptor.compute_face_descriptor(image, shape)
+
+        features_coordinate = np.array(face_descriptor)
+
+        for i in face_model_list:
+            np_ln = np.linal
+    for (i, rect) in enumerate(rects):
+        shape = predictor(gray, rect)
+        x = rect.left()
+        y = rect.top()
+
+        face_descriptor = descriptor.compute_face_descriptor(image, shape)
 
         features_coordinate = np.array(face_descriptor)
 
@@ -117,7 +128,7 @@ def facial_feature(imagePath):
             dist.append(np_ln)
 
 # '邓丽君', '邓丽君', '邓丽君', '邓丽君', '邓丽君', 'jay', 'jay', 'jay', 'jay',
-    candidate = ['邓丽君',  'jay']
+    candidate = ['denglijun',  'jay']
     temp_dict = dict(zip(candidate, dist))
 
     dict_sorted = sorted(temp_dict.items(), key = lambda d:d[1])
@@ -132,11 +143,19 @@ def facial_feature(imagePath):
     cv2.waitKey(0)
 
 def start():
+    from time import clock
+    start_time = clock()
+
+    init_facial_model()
     # if len(sys.argv) < 2:
     #     print("Usage: %s <image file>" % sys.argv[0])
     #     sys.exit(1)
     facial_model_acquisition()
-    # facial_regional_marker("./imgs/test-0.jpg")
-    facial_feature("./imgs/test-0.jpg")
+    # facial_regional_marker("./imgs/face.jpg")
+    # facial_feature("./imgs/denglijun-4.jpg")
+    facial_feature("./imgs/jay-3.jpg")
+
+    end_time = clock()
+    print("method walk costs time is : " , str(end_time - start_time))
 
 start()
