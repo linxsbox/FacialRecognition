@@ -78,3 +78,39 @@ def testWalk():
 
 > **os.listdir** 在文件越多的情况下优势越明显  
 > **os.listdir** > **glob.glob** > **os.walk**
+
+---
+
+## 2018年1月29日
+
+动态追踪学习实现
+
+参考 [http://python.jobbole.com/81593/](http://python.jobbole.com/81593/)
+
+**原理：** 主要是利用了摄像头读取到的 **第一帧(first frame)** 作为背景模型，以及对读取到的每一帧都做预处理，先转 **灰度图**，再进行 **高斯滤波**，然后会对这些帧进行计算与背景的差异值，从而得到 **分差图（different map）**，这样就可以得到和捕获动态物体的轮廓了，最后再输出出来即可。
+
+```python
+# Camera object.
+camera = cv2.VideoCapture(0)
+
+# Read the camera frame, it's loop.
+while Ture:
+    grabbed, frame = camera.read()
+
+    ……
+    # Color revised
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    # GaussianBlur
+    gray = cv2.GaussianBlur(gray, (21, 21), 0)
+
+    ……
+
+    # different map
+    frameDelta = cv2.absdiff(firstFrame, gray)
+    # threshold to binary
+    thresh = cv2.threshold(frameDelta, 25, 255, cv2.THRESH_BINARY)[1]
+    # Morphological dilation.  
+    thresh = cv2.dilate(thresh, es, iterations = 2)
+    _, contours, _ = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+```

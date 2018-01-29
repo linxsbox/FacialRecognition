@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-import sys, os, dlib, cv2, glob
+import sys, os, dlib, cv2
 import numpy as np
 
 shape_predictor_68_face_landmarks = "./DataModel/shape_predictor_68_face_landmarks.dat"
